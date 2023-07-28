@@ -13,19 +13,20 @@ from elasticsearch import Elasticsearch
 
 counter = None
 
-def get_juridiction(juridiction) -> str:
+
+def get_juridiction(juridiction: str) -> str:
     return re.match(r"\b.+?(?=\s-\s)\b", juridiction).group(0)
 
 
-def get_numero(numero) -> str:
+def get_numero(numero: str) -> str:
     return re.match(r"\b.+?:\s(.+)\b", numero).group(1)
 
 
-def get_date(date) -> str:
+def get_date(date: str) -> str:
     return re.match(r"\b.+?(\d+\s\w+\s\d+)\b", date).group(1)
 
 
-def build_json(title, juridiction, rg_num, date, text, id) -> Dict:
+def build_json(title: str, juridiction: str, rg_num: str, date: str, text: str, id: int) -> Dict:
     """
     Build the json for a jurisprudence.
     :param title:
@@ -37,24 +38,24 @@ def build_json(title, juridiction, rg_num, date, text, id) -> Dict:
     :return:
     """
     return \
-    {
-        "filename": "legifrance.parquet",
-        "database": "legifrance",
-        "loadedAt": datetime.now().strftime('%Y-%m-%d-%H'),
-        "metadata": {
-            "properties": {
-                "id": id,
-                "juridiction": get_juridiction(juridiction[0]) if len(juridiction) != 0 else None,
-                "title": title[0] if len(title) != 0 else None,
-                "number": get_numero(rg_num[0]) if len(rg_num) != 0 else None,
-                "date": get_date(date[0]) if len(date) != 0 else None
-            }
-        },
-        "text": ' '.join([str(elem) for elem in text])
-    }
+        {
+            "filename": "legifrance.parquet",
+            "database": "legifrance",
+            "loadedAt": datetime.now().strftime('%Y-%m-%d-%H'),
+            "metadata": {
+                "properties": {
+                    "id": id,
+                    "juridiction": get_juridiction(juridiction[0]) if len(juridiction) != 0 else None,
+                    "title": title[0] if len(title) != 0 else None,
+                    "number": get_numero(rg_num[0]) if len(rg_num) != 0 else None,
+                    "date": get_date(date[0]) if len(date) != 0 else None
+                }
+            },
+            "text": ' '.join([str(elem) for elem in text])
+        }
 
 
-def get_source_code(url) -> str:
+def get_source_code(url: str) -> str:
     """
     Using selenium, this function return the source code of a web page.
     :param url:
@@ -80,7 +81,7 @@ def get_source_code(url) -> str:
         return driver.page_source
 
 
-def get_links(url) -> List[str]:
+def get_links(url: str) -> List[str]:
     """
     Get all the jurisprudence's links from a page
     :param url:
@@ -91,7 +92,7 @@ def get_links(url) -> List[str]:
     return links
 
 
-def get_all_jurisprudence_urls(domaine) -> List[str]:
+def get_all_jurisprudence_urls(domaine: str) -> List[str]:
     """
     Get all the jurisprudence's links from the website
     :param domaine: nom de domaine du site
@@ -114,7 +115,7 @@ def get_all_jurisprudence_urls(domaine) -> List[str]:
         print(f"INFO: Total of urls before the page({paging}) : {len(final_links)}")
 
 
-def get_jurisprudence(url) -> Dict:
+def get_jurisprudence(url: str) -> Dict:
     """
     Get all the informations of a jurisprudence form the webpage and build the json.
     :param url:
@@ -135,7 +136,7 @@ def get_jurisprudence(url) -> Dict:
         return build_json(title, juridiction, rg_num, date, text, counter.value)
 
 
-def export_elasticsearch(documents) -> None:
+def export_elasticsearch(documents: List[Dict]) -> None:
     """
     Exporting a list of document to elasticsearch
     :param documents:
@@ -169,7 +170,7 @@ def doit() -> None:
 
     print("\n\n\n************************** STEP 2 **************************\n")
     print("INFO: Collecting jurisprudence....")
-    process = Pool(initargs=(counter, ))
+    process = Pool(initargs=(counter,))
     data = process.map(get_jurisprudence, links)
     process.close()
     process.join()
@@ -193,11 +194,9 @@ def doit() -> None:
         print("WARNING: ERROR, cannot export to Elasticsearch.")
 
 
-
-
 if __name__ == '__main__':
     # Counter for documents id
-    #counter = Value('i', 0)
+    counter = Value('i', 0)
     start = time.time()
     print(f"==============================================================================\n"
           f"||| Starting scrapping for legifrance\n"
@@ -208,5 +207,5 @@ if __name__ == '__main__':
     print(f"==============================================================================\n"
           f"||| Execution ended\n"
           f"||| End time: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(end_time))}\n"
-          f"||| Total time: {end_time-start}\n"
+          f"||| Total time: {end_time - start}\n"
           f"==============================================================================")

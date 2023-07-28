@@ -14,11 +14,11 @@ from elasticsearch import Elasticsearch
 counter = None
 
 
-def get_juridiction(juridiction: str) -> str:
+def get_jurisdiction(juridiction: str) -> str:
     return re.match(r"\b.+?(?=\s-\s)\b", juridiction).group(0)
 
 
-def get_numero(numero: str) -> str:
+def get_number(numero: str) -> str:
     return re.match(r"\b.+?:\s(.+)\b", numero).group(1)
 
 
@@ -45,9 +45,9 @@ def build_json(title: str, juridiction: str, rg_num: str, date: str, text: str, 
             "metadata": {
                 "properties": {
                     "id": id,
-                    "juridiction": get_juridiction(juridiction[0]) if len(juridiction) != 0 else None,
+                    "juridiction": get_jurisdiction(juridiction[0]) if len(juridiction) != 0 else None,
                     "title": title[0] if len(title) != 0 else None,
-                    "number": get_numero(rg_num[0]) if len(rg_num) != 0 else None,
+                    "number": get_number(rg_num[0]) if len(rg_num) != 0 else None,
                     "date": get_date(date[0]) if len(date) != 0 else None
                 }
             },

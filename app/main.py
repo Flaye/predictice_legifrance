@@ -2,13 +2,12 @@ import re
 from multiprocessing import Pool, Value
 
 import pandas as pd
+import requests
 from lxml import html
 import time
 from datetime import datetime
 from typing import Dict, List
 
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 from elasticsearch import Elasticsearch
 
 counter = None
@@ -61,24 +60,8 @@ def get_source_code(url: str) -> str:
     :param url:
     :return:
     """
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument("--no-sandbox")
-    options.add_argument("--headless")
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--disable-blink-features=AutomationControlled')
-    driver = webdriver.Chrome(options=options)
-    try:
-        driver.get(url)
-        return driver.page_source
-    except:
-        driver.quit()
-        print("\nWARNING: Scrapper stopped, launching again in 4 seconds...")
-        time.sleep(range(2))
-        driver = webdriver.Chrome(options=options)
-        time.sleep(range(2))
-        driver.get(url)
-        return driver.page_source
+    response = requests.get(url)
+    return str(response.content)
 
 
 def get_links(url: str) -> List[str]:
@@ -107,12 +90,13 @@ def get_all_jurisprudence_urls(domaine: str) -> List[str]:
         url = f"{domaine}/search/juri?tab_selection=juri&searchField=ALL&query=*&searchProximity" \
               f"=&searchType=ALL&isAdvancedResult=&isAdvancedResult=&dateDecision=01%2F06%2F2022+%3E+30%2F06%2F2022" \
               f"&pdcSearchArbo=&pdcSearchArboId=&typePagination=DEFAULT&sortValue=DATE_DESC&pageSize=" \
-              f"{page_size}&page={paging}&tab_selection=juri "
+              f"{page_size}&page={paging}&tab_selection=juri"
         links_current = [domaine + link for link in get_links(url)]
         print(f"INFO: Number of urls on page n°{paging}: {len(links_current)}")
         final_links.extend(links_current)
         paging += 1
         print(f"INFO: Total of urls before the page({paging}) : {len(final_links)}")
+    return final_links
 
 
 def get_jurisprudence(url: str) -> Dict:
@@ -163,20 +147,20 @@ def doit() -> None:
     :return:
     """
     domaine = "https://www.legifrance.gouv.fr"
-    print("************************** STEP 1 **************************\n")
+    print("************************** STEP 1 **************************")
     print("INFO: Collecting all the urls....")
     links = get_all_jurisprudence_urls(domaine)
-    print(f"\nINFO: Total number of urls: {len(links)}")
+    print(f"INFO: Total number of urls: {len(links)}")
 
-    print("\n\n\n************************** STEP 2 **************************\n")
+    print("\n************************** STEP 2 **************************\n")
     print("INFO: Collecting jurisprudence....")
     process = Pool(initargs=(counter,))
     data = process.map(get_jurisprudence, links)
     process.close()
     process.join()
-    print(f"\nINFO: Total number of jurisprudence : {len(data)}")
-    print("\n\n\n************************** STEP 2 **************************\n")
-    print(f"\nINFO: Exporting to parquet....")
+    print(f"INFO: Total number of jurisprudence : {len(data)}")
+    print("\n************************** STEP 2 **************************")
+    print(f"INFO: Exporting to parquet....")
     try:
         df = pd.DataFrame.from_records(data)
         df.to_parquet("./output/legifrance.parquet")

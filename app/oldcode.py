@@ -1,4 +1,4 @@
-def get_source_code(url: str) -> str:
+def get_source_code_selenium(url: str) -> str:
     """
     Using selenium, this function return the source code of a web page.
     :param url:

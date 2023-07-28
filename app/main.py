@@ -9,6 +9,8 @@ from datetime import datetime
 from typing import Dict, List
 
 from elasticsearch import Elasticsearch
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 
 counter = None
 
@@ -56,10 +58,10 @@ def build_json(title: str, juridiction: str, rg_num: str, date: str, text: str, 
 
 def get_source_code(url: str) -> str:
     """
-    Using selenium, this function return the source code of a web page.
-    :param url:
-    :return:
-    """
+        Using request, this function return the source code of a web page.
+        :param url:
+        :return:
+        """
     response = requests.get(url)
     return str(response.content)
 
@@ -168,15 +170,10 @@ def doit() -> None:
     except:
         print("WARNING: ERROR, cannot write parquet.")
     print(f"\nINFO: Exporting to ElasticSearch....")
-    try:
-        export_elasticsearch(data)
-        print(f"\nINFO: Exporting to ElasticSearch.... OK")
-        print("To run ElasticSearch : http://localhost:9200")
-        print("To run Kibana : http://localhost:5600")
-
-    except:
-        print("WARNING: ERROR, cannot export to Elasticsearch.")
-
+    export_elasticsearch(data)
+    print(f"\nINFO: Exporting to ElasticSearch.... OK")
+    print("To run ElasticSearch : http://localhost:9200")
+    print("To run Kibana : http://localhost:5600")
 
 if __name__ == '__main__':
     # Counter for documents id

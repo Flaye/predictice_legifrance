@@ -1,0 +1,34 @@
+version: "3.8"
+services:
+  elasticsearch:
+    image: "docker.elastic.co/elasticsearch/elasticsearch:7.17.0"
+    container_name: elasticsearch
+    ports:
+      - 9200:9200
+      - 9300:9300
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    networks:
+      - deploy_network
+  app:
+    build: app/
+    volumes:
+      - ./output:/app/output
+    depends_on:
+      - elasticsearch
+    environment:
+      - 'ELASTICSEARCH_HOST=["http://elasticsearch:9200"]'
+    networks:
+      - deploy_network
+  kibana:
+    image: "docker.elastic.co/kibana/kibana-oss:7.10.2"
+    ports:
+      - "5600:5600"
+    environment:
+      - 'ELASTICSEARCH_HOST=["http://elasticsearch:9200"]'
+    networks:
+      - deploy_network
+networks:
+  deploy_network:
+    driver: bridge

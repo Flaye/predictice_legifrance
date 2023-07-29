@@ -24,10 +24,14 @@ Ce projet utilise les technologies suivantes :
 * Docker
 
 ## Notes
-* Pour mes premiers tests de scrapping, j'ai essayé de faire au plus simple, et d'utiliser request pour récupérer les données.
-* Le souci de cette méthode est qu'il arrive parfois que certaines pages soient inaccessibles. En effet, le site est protégé par un système d'anti-bots **Imperva Incapsula**, et request.get ne permet pas de toujours l'éviter.
-* Il a donc fallu trouver une solution qui fonctionne à chaque exécution et sans perdre de données. C'est pourquoi j'utilise Selenium pour récupérer le code source des pages du site.
-* Bien que cela ralentisse beaucoup l'exécution du scrapper, je trouve que 6 minutes d'exécution reste raisonnable.
+* ### Scrapping
+  * Pour mes premiers tests de scrapping, j'ai essayé de faire au plus simple, et d'utiliser request pour récupérer les données.
+  * Le souci de cette méthode est qu'il arrive parfois que certaines pages soient inaccessibles. En effet, le site est protégé par un système d'anti-bots **Imperva Incapsula**, et request.get ne permet pas de toujours l'éviter.
+  * Il a donc fallu trouver une solution qui fonctionne à chaque exécution et sans perdre de données. C'est pourquoi j'utilise Selenium pour récupérer le code source des pages du site.
+  * Bien que cela ralentisse beaucoup l'exécution du scrapper, je trouve que 6 minutes d'exécution reste raisonnable.
+* ### Désanonymisation
+  * Ne trouvant pas les equivalents de noms / prenoms, j'ai créée une liste de valeurs par defaut afin de quand même pouvoir remplacer les [A][B] par des valeurs.
+  * Même si ça ne répond pas à la demande, une fois les bonnes valeurs recupérées, la méthode de modification du texte reste similaire.
 
 ## Procedure de lancement
 Le projet étant conteneurisé via docker, il est nécessaire de lancer un docker-compose afin d'installer les librairies python et de lancer l'application.

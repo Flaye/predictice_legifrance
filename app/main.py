@@ -1,3 +1,4 @@
+import json
 import re
 from multiprocessing import Pool, Value
 
@@ -12,6 +13,52 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
 counter = None
+
+
+def replace_last_name(text: str) -> str:
+    """
+    This function replace all the last names of type M. [A]
+    :param text:
+    :return:
+    """
+    with open('./names.json', 'r') as fichier:
+        data = json.load(fichier)
+    last_name_json = data["LastName"]
+
+    def replace_correspondence(match):
+        last_name_lettre = match.group(2)
+        if last_name_lettre in last_name_json:
+            last_name = last_name_json[last_name_lettre]
+            return match.group(1) + " " + last_name
+        else:
+            return match.group(0)
+    pattern = r'(M?\.?|Mme?\.?|Mlle\.?)\s*(\[[A-Z]\])'
+    return re.sub(pattern, replace_correspondence, text)
+
+
+def replace_double_letters(text: str) -> str:
+    """
+    This function replace all the name of type [A][B]
+    :param text:
+    :return:
+    """
+    with open('./names.json', 'r') as fichier:
+        data = json.load(fichier)
+    first_name_json = data["FirstName"]
+    last_name_json = data["LastName"]
+
+    def replace_correspondence(match):
+        first_name_lettre = match.group(2)
+        last_name_lettre = match.group(3)
+        if last_name_lettre in last_name_json and first_name_lettre in first_name_json:
+            last_name = last_name_json[last_name_lettre]
+            first_name = first_name_json[first_name_lettre]
+            return first_name + " " + last_name
+        else:
+            return match.group(0)
+
+    pattern = r'((\[[A-Z]\])\s*(\[([A-Z])\]))'
+    return replace_last_name(re.sub(pattern, replace_correspondence, text))
 
 
 def get_jurisdiction(juridiction: str) -> str:
@@ -51,7 +98,7 @@ def build_json(title: str, juridiction: str, rg_num: str, date: str, text: str, 
                     "date": get_date(date[0]) if len(date) != 0 else None
                 }
             },
-            "text": ' '.join([str(elem) for elem in text])
+            "text": replace_double_letters(' '.join([str(elem) for elem in text]))
         }
 
 

@@ -58,12 +58,28 @@ def build_json(title: str, juridiction: str, rg_num: str, date: str, text: str, 
 
 def get_source_code(url: str) -> str:
     """
-        Using request, this function return the source code of a web page.
-        :param url:
-        :return:
-        """
-    response = requests.get(url)
-    return str(response.content)
+    Using selenium, this function return the source code of a web page.
+    :param url:
+    :return:
+    """
+    options = Options()
+    options.add_argument('--headless')
+    options.add_argument("--no-sandbox")
+    options.add_argument("--headless")
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--disable-blink-features=AutomationControlled')
+    driver = webdriver.Chrome(options=options)
+    try:
+        driver.get(url)
+        return driver.page_source
+    except:
+        driver.quit()
+        print("\nWARNING: Scrapper stopped, launching again in 4 seconds...")
+        time.sleep(range(2))
+        driver = webdriver.Chrome(options=options)
+        time.sleep(range(2))
+        driver.get(url)
+        return driver.page_source
 
 
 def get_links(url: str) -> List[str]:
@@ -101,7 +117,7 @@ def get_all_jurisprudence_urls(domaine: str) -> List[str]:
     return final_links
 
 
-def get_jurisprudence(url: str) -> Dict:
+def get_jurisprudence(url: str, retry = 0) -> Dict:
     """
     Get all the informations of a jurisprudence form the webpage and build the json.
     :param url:
@@ -110,14 +126,13 @@ def get_jurisprudence(url: str) -> Dict:
     global counter
     source_code = get_source_code(url)
     tree = html.fromstring(source_code)
-    title = tree.xpath("//div[@class='main-col']/h1[@class='main-title']/text()")
+    title = tree.xpath("//h1[@class='main-title']/text()")
     juridiction = tree.xpath("//*[@id='main']/div/div/div[2]/div[1]/div[1]/h2/text()")
     rg_num = tree.xpath("//*[@id='main']/div/div/div[2]/div[1]/div[1]/ul/li[1]/text()")
     date = tree.xpath("//*[@id='main']/div/div/div[2]/div[1]/div[2]/div/text()")
     text = tree.xpath("//div[@class='content-page']/div[2]/text()")
-    global counter
     with counter.get_lock():
-        print(f"INFO: ID ({counter.value}) Current jurisprudence : {title}")
+        print(f"INFO: ID ({counter.value}) Current jurisprudence : {title}, {url}")
         counter.value += 1
         return build_json(title, juridiction, rg_num, date, text, counter.value)
 
@@ -173,7 +188,7 @@ def doit() -> None:
     export_elasticsearch(data)
     print(f"\nINFO: Exporting to ElasticSearch.... OK")
     print("To run ElasticSearch : http://localhost:9200")
-    print("To run Kibana : http://localhost:5600")
+    print("To run Kibana : http://localhost:5601/app/dev_tools#/console")
 
 if __name__ == '__main__':
     # Counter for documents id

@@ -22,3 +22,12 @@ def get_source_code_selenium(url: str) -> str:
         time.sleep(range(2))
         driver.get(url)
         return driver.page_source
+
+def get_source_code_request(url: str)-> str:
+    """
+            Using request, this function return the source code of a web page.
+            :param url:
+            :return:
+            """
+    response = requests.get(url)
+    return response.text

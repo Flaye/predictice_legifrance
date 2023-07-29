@@ -2,7 +2,6 @@ import re
 from multiprocessing import Pool, Value
 
 import pandas as pd
-import requests
 from lxml import html
 import time
 from datetime import datetime

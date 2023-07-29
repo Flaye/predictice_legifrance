@@ -27,7 +27,7 @@ def get_date(date: str) -> str:
     return re.match(r"\b.+?(\d+\s\w+\s\d+)\b", date).group(1)
 
 
-def build_json(title: str, juridiction: str, rg_num: str, date: str, text: str, id: int, execution_time: str) -> Dict:
+def build_json(title: str, juridiction: str, rg_num: str, date: str, text: str, id: int) -> Dict:
     """
     Build the json for a jurisprudence.
     :param title:
@@ -42,7 +42,7 @@ def build_json(title: str, juridiction: str, rg_num: str, date: str, text: str, 
         {
             "filename": "legifrance.parquet",
             "database": "legifrance",
-            "loadedAt": execution_time,
+            "loadedAt": datetime.now().strftime('%Y-%m-%d-%H'),
             "metadata": {
                 "properties": {
                     "id": id,
@@ -117,7 +117,7 @@ def get_all_jurisprudence_urls(domaine: str) -> List[str]:
     return final_links
 
 
-def get_jurisprudence(url: str, execution_time: str) -> Dict:
+def get_jurisprudence(url: str) -> Dict:
     """
     Get all the informations of a jurisprudence form the webpage and build the json.
     :param url:
@@ -134,7 +134,7 @@ def get_jurisprudence(url: str, execution_time: str) -> Dict:
     with counter.get_lock():
         print(f"INFO: ID ({counter.value}) Current jurisprudence : {title}, {url}")
         counter.value += 1
-        return build_json(title, juridiction, rg_num, date, text, counter.value, execution_time)
+        return build_json(title, juridiction, rg_num, date, text, counter.value)
 
 
 def export_elasticsearch(documents: List[Dict]) -> None:
@@ -164,7 +164,6 @@ def doit() -> None:
     :return:
     """
     domaine = "https://www.legifrance.gouv.fr"
-    execution_time = datetime.now().strftime('%Y-%m-%d_%H')
     print("************************** STEP 1 **************************")
     print("INFO: Collecting all the urls....")
     links = get_all_jurisprudence_urls(domaine)
@@ -173,7 +172,7 @@ def doit() -> None:
     print("\n************************** STEP 2 **************************\n")
     print("INFO: Collecting jurisprudence....")
     process = Pool(initargs=(counter,))
-    data = process.map(get_jurisprudence, links, execution_time)
+    data = process.map(get_jurisprudence, links)
     process.close()
     process.join()
     print(f"INFO: Total number of jurisprudence : {len(data)}")
@@ -181,7 +180,7 @@ def doit() -> None:
     print(f"INFO: Exporting to parquet....")
     try:
         df = pd.DataFrame.from_records(data)
-        df.to_parquet(f"./output/{execution_time}.parquet")
+        df.to_parquet("./output/legifrance.parquet")
         print(f"\nINFO: Exporting to parquet.... OK")
     except:
         print("WARNING: ERROR, cannot write parquet.")
@@ -190,6 +189,7 @@ def doit() -> None:
     print(f"\nINFO: Exporting to ElasticSearch.... OK")
     print("To run ElasticSearch : http://localhost:9200")
     print("To run Kibana : http://localhost:5601/app/dev_tools#/console")
+
 
 if __name__ == '__main__':
     # Counter for documents id
